@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>馬ジャンプゲーム</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: linear-gradient(#87CEEB, #ffffff);
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    h1 {
+        margin: 10px;
+    }
+
+    #game {
+        position: relative;
+        width: 800px;
+        height: 300px;
+        margin: auto;
+        background: #c2f0c2;
+        border: 3px solid #333;
+        overflow: hidden;
+    }
+
+    #horse {
+        position: absolute;
+        bottom: 0;
+        left: 100px;
+        font-size: 50px;
+        transition: bottom 0.1s;
+    }
+
+    .obstacle {
+        position: absolute;
+        bottom: 0;
+        right: -50px;
+        font-size: 40px;
+    }
+
+    #score {
+        font-size: 20px;
+        margin-top: 10px;
+    }
+
+    #gameOver {
+        display: none;
+        font-size: 30px;
+        color: red;
+        margin-top: 10px;
+    }
+
+    button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+</style>
+</head>
+<body>
+
+<h1>🐎 馬ジャンプゲーム</h1>
+
+<div id="game">
+    <div id="horse">🐎</div>
+</div>
+
+<div id="score">スコア: 0</div>
+<div id="gameOver">ゲームオーバー！</div>
+<button onclick="restartGame()">リスタート</button>
+
+<script>
+const horse = document.getElementById("horse");
+const game = document.getElementById("game");
+const scoreDisplay = document.getElementById("score");
+const gameOverText = document.getElementById("gameOver");
+
+let horseBottom = 0;
+let isJumping = false;
+let gravity = 0.9;
+let obstacles = [];
+let gameInterval;
+let obstacleInterval;
+let score = 0;
+let isGameOver = false;
+
+function jump() {
+    if (isJumping || isGameOver) return;
+    isJumping = true;
+    let jumpHeight = 0;
+
+    let upInterval = setInterval(() => {
+        if (jumpHeight >= 120) {
+            clearInterval(upInterval);
+            let downInterval = setInterval(() => {
+                if (jumpHeight <= 0) {
+                    clearInterval(downInterval);
+                    isJumping = false;
+                }
+                jumpHeight -= 5;
+                horseBottom = jumpHeight;
+                horse.style.bottom = horseBottom + "px";
+            }, 20);
+        }
+        jumpHeight += 5;
+        horseBottom = jumpHeight;
+        horse.style.bottom = horseBottom + "px";
+    }, 20);
+}
+
+function createObstacle() {
+    if (isGameOver) return;
+
+    const obstacle = document.createElement("div");
+    obstacle.classList.add("obstacle");
+    obstacle.innerHTML = "🌵";
+    game.appendChild(obstacle);
+
+    let obstacleRight = -50;
+    obstacle.style.right = obstacleRight + "px";
+
+    obstacles.push(obstacle);
+
+    let moveInterval = setInterval(() => {
+        if (isGameOver) {
+            clearInterval(moveInterval);
+            return;
+        }
+
+        obstacleRight += 5;
+        obstacle.style.right = obstacleRight + "px";
+
+        // 当たり判定
+        const horseRect = horse.getBoundingClientRect();
+        const obstacleRect = obstacle.getBoundingClientRect();
+
+        if (
+            horseRect.right > obstacleRect.left &&
+            horseRect.left < obstacleRect.right &&
+            horseRect.bottom > obstacleRect.top
+        ) {
+            endGame();
+        }
+
+        if (obstacleRight > 850) {
+            clearInterval(moveInterval);
+            game.removeChild(obstacle);
+            score++;
+            scoreDisplay.textContent = "スコア: " + score;
+        }
+    }, 20);
+}
+
+function startGame() {
+    gameInterval = setInterval(() => {
+        if (!isGameOver) {
+            scoreDisplay.textContent = "スコア: " + score;
+        }
+    }, 100);
+
+    obstacleInterval = setInterval(createObstacle, 2000);
+}
+
+function endGame() {
+    isGameOver = true;
+    gameOverText.style.display = "block";
+}
+
+function restartGame() {
+    location.reload();
+}
+
+document.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+        jump();
+    }
+});
+
+startGame();
+</script>
+
+</body>
+</html>
